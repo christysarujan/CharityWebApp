@@ -22,20 +22,20 @@ public class JwtTokenProvider {
 
     public String generateToken(Authentication authentication){
 
-        System.out.println(authentication);
+
         String username = authentication.getName();
         Date currentDate = new Date();
         Date expireDate = new Date(currentDate.getTime() + jwtExpirationDate);
 
         // Extract roles from authentication and join them as a comma-separated string
         String roles = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
+                .map(role -> "ROLE_" + role.getAuthority())
                 .collect(Collectors.joining(","));
 
         String token = Jwts.builder()
                 .subject(username)
                 .claim("roles",roles)
-                .issuedAt(new Date())
+                .issuedAt(currentDate)
                 .expiration(expireDate)
                 .signWith(key())
                 .compact();
@@ -69,11 +69,17 @@ public class JwtTokenProvider {
 
     //validate jwt token
     public boolean validateToken(String token){
-        Jwts.parser()
-                .verifyWith((SecretKey) key())
-                .build()
-                .parse(token);
-        return true;
+        try{
+            Jwts.parser()
+                    .verifyWith((SecretKey) key())
+                    .build()
+                    .parse(token);
+            return true;
+        }catch (Exception ex){
+            System.out.println("Invalid JWT token ");
+            return false;
+        }
+
 
     }
 }
